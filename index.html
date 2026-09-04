@@ -7,6 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>ТУМАН — открывай карту ногами</title>
 
+<!-- Иконка встроена как data-URI: убирает 404 по favicon.ico -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23ffb43a'/%3E%3Ccircle cx='12' cy='12' r='5.5' fill='none' stroke='%23221403' stroke-width='2'/%3E%3Cpath stroke='%23221403' stroke-width='2' stroke-linecap='round' d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3'/%3E%3C/svg%3E">
+
 <!-- Шрифты: акцидентный Unbounded + наборный Manrope -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -354,9 +357,9 @@ const dTime = $('dTime'), dDist = $('dDist'), dZones = $('dZones');
 
 /* ============================================================
    4. ИНИЦИАЛИЗАЦИЯ
+   ВНИМАНИЕ: сам вызов init() — в самом конце файла,
+   чтобы все функции и константы уже были объявлены.
 ============================================================ */
-init();
-
 function init(){
   loadStorage();
   initMap();
@@ -662,17 +665,19 @@ function bindUI(){
     sessionStart = tracking ? Date.now() : null;
     saveNow(); requestFog(); updateStatsUI();
     toast('Прогресс сброшен — мир снова в тумане');
-
-    function disarm(){
-      armed = false; clearTimeout(armT);
-      resetBtn.classList.remove('armed');
-      resetBtn.textContent = 'Сбросить прогресс';
-    }
   });
+
+  function disarm(){
+    armed = false; clearTimeout(armT);
+    resetBtn.classList.remove('armed');
+    resetBtn.textContent = 'Сбросить прогресс';
+  }
 }
 
 /* ============================================================
    10. УТИЛИТЫ
+   Объявлены как function-декларации: они доступны из любого
+   места файла ещё до выполнения кода (всплытие функций).
 ============================================================ */
 // расстояние между двумя точками [lat,lng], метры
 function haversine(a, b){
@@ -682,15 +687,28 @@ function haversine(a, b){
             Math.cos(a[0]*toR) * Math.cos(b[0]*toR) * Math.sin(dLng/2)**2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
-const fmtDist = m => m < 1000 ? `${Math.round(m)} м`
-                              : `${(m/1000).toFixed(m < 10000 ? 2 : 1)} км`;
+// форматирование дистанции: "840 м" / "1.24 км"
+function fmtDist(m){
+  return m < 1000 ? `${Math.round(m)} м`
+                  : `${(m/1000).toFixed(m < 10000 ? 2 : 1)} км`;
+}
+// форматирование времени: "12:05" или "1:02:33"
 function fmtTime(s){
   s = Math.floor(s);
   const h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
   const p = n => String(n).padStart(2,'0');
   return h ? `${h}:${p(m)}:${p(sec)}` : `${m}:${p(sec)}`;
 }
-const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+// отложенный вызов: пригодился для сохранения вида камеры
+function debounce(fn, ms){
+  let t;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+/* ============================================================
+   ЗАПУСК — строго после объявления всего необходимого
+============================================================ */
+init();
 </script>
 </body>
 </html>
